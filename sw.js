@@ -1,8 +1,8 @@
 /* sw.js - simple precache for LeoMind */
-const LEOMIND_CACHE = 'leomind-v1'; // <-- bump this on updates
+const LEOMIND_CACHE = 'leomind-v2'; // <-- bump this on updates
 const ASSETS = [
-  '/', '/index.html', '/styles.css', '/main.js', '/store.js', '/charts.js', '/export.js',
-  '/manifest.webmanifest', '/icons/icon-192.png', '/icons/icon-512.png'
+  './', 'index.html', 'styles.css', 'main.js', 'store.js', 'charts.js', 'export.js',
+  'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png'
 ];
 
 self.addEventListener('install', (event)=>{

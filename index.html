@@ -12,7 +12,7 @@
     // Simple SW registration (soft-fail for private mode)
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').catch(()=>{});
+        navigator.serviceWorker.register('./sw.js').catch(()=>{});
       });
     }
   </script>
@@ -192,9 +192,9 @@
     <small>Offlinefähig · Alle Daten nur lokal im Browser</small>
   </footer>
 
-  <script src="store.js"></script>
-  <script src="charts.js"></script>
-  <script src="export.js"></script>
-  <script src="main.js"></script>
+  <script type="module" src="store.js"></script>
+  <script type="module" src="charts.js"></script>
+  <script type="module" src="export.js"></script>
+  <script type="module" src="main.js"></script>
 </body>
 </html>
