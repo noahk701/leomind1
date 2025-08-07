@@ -91,3 +91,12 @@ textarea { resize: vertical; }
 
 .warning { background: #fff6e6; border: 1px solid #ffd699; color: #6b4e00; padding: 10px 12px; border-radius: 12px; }
 .form-actions { display: flex; gap: 10px; margin-top: 10px; }
+/* Fix für Chart-„Kaugummi“-Bug */
+.card.charts {
+  height: 250px; /* feste Höhe */
+  position: relative; /* nötig für Chart.js Layout */
+}
+.card.charts canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
