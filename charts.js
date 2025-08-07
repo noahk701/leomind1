@@ -57,47 +57,48 @@ export async function renderCharts() {
     .map(e=>({ x: Number(e.sleepHours), y: Number(e.mood)||null }));
 
   // Mood line
-  const ctx1 = document.getElementById('moodLine');
-  if (moodLineChart) moodLineChart.destroy();
-  moodLineChart = new Chart(ctx1, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Stimmung',
-        data: moodData,
-        tension: 0.35,
-        spanGaps: true,
-        pointRadius: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        y: { min:1, max:10, ticks:{ stepSize:1 } }
-      }
+const ctx1 = document.getElementById('moodLine');
+if (moodLineChart) moodLineChart.destroy();
+ctx1.getContext('2d').clearRect(0, 0, ctx1.width, ctx1.height); // Canvas leeren
+moodLineChart = new Chart(ctx1, {
+  type: 'line',
+  data: {
+    labels,
+    datasets: [{
+      label: 'Stimmung',
+      data: moodData,
+      tension: 0.35,
+      spanGaps: true,
+      pointRadius: 2
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { min: 1, max: 10, ticks: { stepSize: 1 } }
     }
-  });
+  }
+});
 
-  // Sleep scatter
-  const ctx2 = document.getElementById('sleepScatter');
-  if (sleepScatterChart) sleepScatterChart.destroy();
-  sleepScatterChart = new Chart(ctx2, {
-    type: 'scatter',
-    data: {
-      datasets: [{
-        label: 'Schlaf ↔ Stimmung',
-        data: sleepPoints
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-        x: { title: { display:true, text:'Schlaf (h)' }, min:0, max: 12 },
-        y: { title: { display:true, text:'Stimmung' }, min:1, max:10, ticks:{ stepSize:1 } }
-      }
+ // Sleep scatter
+const ctx2 = document.getElementById('sleepScatter');
+if (sleepScatterChart) sleepScatterChart.destroy();
+ctx2.getContext('2d').clearRect(0, 0, ctx2.width, ctx2.height); // Canvas leeren
+sleepScatterChart = new Chart(ctx2, {
+  type: 'scatter',
+  data: {
+    datasets: [{
+      label: 'Schlaf ↔ Stimmung',
+      data: sleepPoints
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { title: { display: true, text: 'Schlaf (h)' }, min: 0, max: 12 },
+      y: { title: { display: true, text: 'Stimmung' }, min: 1, max: 10, ticks: { stepSize: 1 } }
     }
-  });
-}
+  }
+});
