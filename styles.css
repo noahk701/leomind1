@@ -1,0 +1,93 @@
+
+:root {
+  --bg: #ffffff;
+  --text: #111111;
+  --muted: #6b6b6b;
+  --border: #eaeaea;
+  --primary: #007aff;
+  --surface: #fafafa;
+  --radius: 14px;
+  --space: 14px;
+  --font: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Inter', 'Segoe UI', Roboto, Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); font-family: var(--font); -webkit-font-smoothing: antialiased; }
+.app-header {
+  position: sticky; top: 0; z-index: 10;
+  backdrop-filter: saturate(180%) blur(12px);
+  background: rgba(255,255,255,0.8);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px;
+}
+.brand { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.dot { width: 10px; height: 10px; background: var(--primary); border-radius: 50%; display: inline-block; }
+.logo-text { letter-spacing: .2px; }
+.segmented { display: flex; gap: 6px; }
+.seg {
+  border: 1px solid var(--border); background: var(--surface);
+  padding: 8px 10px; border-radius: 9px; font-size: 14px;
+}
+.seg.active { background: var(--bg); border-color: var(--primary); color: var(--primary); }
+
+main { padding: 12px; max-width: 1000px; margin: 0 auto; }
+.view { display: none; }
+.view.active { display: block; }
+.grid { display: grid; gap: var(--space); grid-template-columns: 1fr; }
+.grid-2 { display: grid; grid-template-columns: 1fr; gap: var(--space); }
+@media (min-width: 900px) {
+  .grid { grid-template-columns: 1fr 1fr; }
+  .grid-2 { grid-template-columns: 1fr 1fr; }
+}
+
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.02);
+}
+.card h2 { margin: 0 0 10px 0; font-size: 18px; }
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
+.kpi-label { color: var(--muted); font-size: 12px; }
+.kpi-value { font-size: 22px; font-weight: 600; margin-top: 4px; }
+
+.table-wrap { overflow-x: auto; }
+.table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.table th, .table td { border-bottom: 1px solid var(--border); padding: 8px 10px; vertical-align: top; }
+.table td.actions { white-space: nowrap; }
+
+label { display: block; font-size: 14px; margin: 10px 0; }
+input[type="text"], input[type="number"], input[type="date"], input[type="time"], select, textarea {
+  width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
+}
+textarea { resize: vertical; }
+
+.btn { border: 1px solid var(--border); background: var(--surface); padding: 10px 14px; border-radius: 12px; }
+.btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
+.btn.ghost { background: transparent; }
+
+.app-footer { text-align: center; padding: 18px; color: var(--muted); }
+
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
+.chip button { border: 0; background: transparent; font-size: 14px; }
+
+.suggestions { display: none; position: absolute; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-top: 4px; overflow: hidden; z-index: 5; }
+.suggestions.show { display: block; }
+.suggestions div { padding: 8px 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+.suggestions div:last-child { border-bottom: 0; }
+.chip-input { position: relative; }
+
+.switch { display: inline-flex; align-items: center; gap: 6px; }
+.switch input { appearance: none; width: 34px; height: 20px; border: 1px solid var(--border); border-radius: 999px; position: relative; outline: none; }
+.switch input:checked { border-color: var(--primary); }
+.switch input:before {
+  content: ""; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--muted);
+  transition: transform .2s ease;
+}
+.switch input:checked:before { transform: translateX(14px); background: var(--primary); }
+
+.warning { background: #fff6e6; border: 1px solid #ffd699; color: #6b4e00; padding: 10px 12px; border-radius: 12px; }
+.form-actions { display: flex; gap: 10px; margin-top: 10px; }

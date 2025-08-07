@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>LeoMind</title>
+  <meta name="theme-color" content="#ffffff">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="apple-touch-icon" sizes="180x180" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+  <script>
+    // Simple SW registration (soft-fail for private mode)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(()=>{});
+      });
+    }
+  </script>
+  <!-- External libs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+</head>
+<body>
+  <header class="app-header">
+    <div class="brand">
+      <span class="dot"></span>
+      <span class="logo-text">LeoMind</span>
+    </div>
+    <nav class="segmented">
+      <button data-view="dashboard" class="seg active">Dashboard</button>
+      <button data-view="entry" class="seg">Eintrag</button>
+      <button data-view="history" class="seg">Historie</button>
+      <button data-view="settings" class="seg">Einstellungen</button>
+    </nav>
+  </header>
+
+  <main id="view-root">
+    <!-- Dashboard -->
+    <section id="view-dashboard" class="view active">
+      <div class="grid">
+        <section class="card kpis">
+          <h2>KPIs</h2>
+          <div class="kpi-row">
+            <div class="kpi"><div class="kpi-label">Ø 7 Tage</div><div id="kpi-avg7" class="kpi-value">–</div></div>
+            <div class="kpi"><div class="kpi-label">Ø 30 Tage</div><div id="kpi-avg30" class="kpi-value">–</div></div>
+            <div class="kpi"><div class="kpi-label">Ø 90 Tage</div><div id="kpi-avg90" class="kpi-value">–</div></div>
+            <div class="kpi"><div class="kpi-label">Trend</div><div id="kpi-trend" class="kpi-value">–</div></div>
+          </div>
+        </section>
+
+        <section class="card charts">
+          <h2>Stimmung über Zeit</h2>
+          <canvas id="moodLine"></canvas>
+        </section>
+
+        <section class="card charts">
+          <h2>Schlaf ↔ Stimmung</h2>
+          <canvas id="sleepScatter"></canvas>
+        </section>
+
+        <section class="card triggers">
+          <h2>Trigger-Tage</h2>
+          <ul id="trigger-list" class="list"></ul>
+        </section>
+      </div>
+    </section>
+
+    <!-- Entry -->
+    <section id="view-entry" class="view">
+      <form id="entry-form" class="card form" autocomplete="off">
+        <h2>Neuer Eintrag</h2>
+        <label>Datum
+          <input type="date" id="e-date">
+        </label>
+
+        <label>Stimmung: <span id="e-mood-val">5</span>
+          <input type="range" id="e-mood" min="1" max="10" step="1" value="5">
+        </label>
+
+        <label>Angstlevel: <span id="e-anxiety-val">5</span>
+          <input type="range" id="e-anxiety" min="1" max="10" step="1" value="5">
+        </label>
+
+        <label>Schlafstunden
+          <input type="number" id="e-sleep" min="0" max="24" step="0.1" placeholder="z. B. 7.5">
+        </label>
+
+        <label>Notizen
+          <textarea id="e-notes" rows="3" placeholder="Freitext ..."></textarea>
+        </label>
+
+        <div class="tags-block">
+          <label>Tags</label>
+          <div class="chip-input">
+            <input type="text" id="e-tag-input" placeholder="Tag eingeben und Enter">
+            <div id="e-tag-suggestions" class="suggestions"></div>
+          </div>
+          <div id="e-tags" class="chips"></div>
+        </div>
+
+        <div class="meds-block">
+          <label>Medikation</label>
+          <div id="med-rows"></div>
+          <button type="button" id="add-med" class="btn ghost">+ Zeile hinzufügen</button>
+        </div>
+
+        <details class="phq">
+          <summary>PHQ-9 (optional)</summary>
+          <div id="phq-questions"></div>
+          <div class="phq-sum">Summe: <span id="phq-sum">0</span></div>
+        </details>
+
+        <div class="form-actions">
+          <button type="submit" class="btn primary">Speichern</button>
+          <button type="button" id="clear-form" class="btn">Leeren</button>
+        </div>
+      </form>
+    </section>
+
+    <!-- History -->
+    <section id="view-history" class="view">
+      <section class="card">
+        <h2>Historie</h2>
+        <div class="filters">
+          <label>Von <input type="date" id="f-from"></label>
+          <label>Bis <input type="date" id="f-to"></label>
+          <label>Tag <input type="text" id="f-tag" placeholder="Tag"></label>
+          <label>Medikament
+            <select id="f-med">
+              <option value="">Alle</option>
+            </select>
+          </label>
+          <button id="f-apply" class="btn">Anwenden</button>
+        </div>
+        <div class="table-wrap">
+          <table id="history-table" class="table">
+            <thead>
+              <tr><th>Datum</th><th>Stimmung</th><th>Angst</th><th>PHQ-9</th><th>Schlaf</th><th>Tags</th><th>Medikation</th><th>Notiz</th><th>Aktion</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </section>
+
+    <!-- Settings -->
+    <section id="view-settings" class="view">
+      <section class="card">
+        <h2>Profil</h2>
+        <div class="grid-2">
+          <label>Name <input id="s-name" placeholder="z. B. Noah"></label>
+          <label>PHQ-Tag (0=So...6=Sa) <input id="s-phq-day" type="number" min="0" max="6"></label>
+          <label>PHQ-Zeit (HH:MM) <input id="s-phq-time" type="time"></label>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Medikamenten-Katalog</h2>
+        <div id="meds-list"></div>
+        <div class="meds-edit">
+          <input id="m-name" placeholder="Name">
+          <input id="m-dose" placeholder="Standard-Dosis">
+          <label class="switch">Aktiv <input type="checkbox" id="m-active" checked><span></span></label>
+          <button id="m-add" class="btn">Hinzufügen/Aktualisieren</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Tags</h2>
+        <div id="tags-list" class="chips"></div>
+        <div class="tag-edit">
+          <input id="t-new" placeholder="Neuen Tag hinzufügen">
+          <button id="t-add" class="btn">Hinzufügen</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <h2>Export / Import</h2>
+        <div class="actions">
+          <button id="btn-export" class="btn">Export JSON</button>
+          <input type="file" id="file-import" accept="application/json" style="display:none">
+          <button id="btn-import" class="btn">Import JSON</button>
+          <button id="btn-pdf" class="btn">PDF exportieren</button>
+        </div>
+        <div id="storage-warning" class="warning" hidden></div>
+      </section>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    <small>Offlinefähig · Alle Daten nur lokal im Browser</small>
+  </footer>
+
+  <script src="store.js"></script>
+  <script src="charts.js"></script>
+  <script src="export.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
