@@ -27,12 +27,8 @@ const el = (tag, attrs={}, ...children)=> {
 
 /* ---- Navigation ---- */
 function setActive(view) {
-  // Active-State für alte Header-Navigation (.seg)
-  document.querySelectorAll('.seg').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.view === view);
-  });
-  // Active-State für neue Bottom-Navigation (.nav-icon / .nav-btn)
-  document.querySelectorAll('.nav-icon, .nav-btn').forEach(btn => {
+  // Active-State nur noch für neue Bottom-Navigation
+  document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === view);
   });
 
@@ -49,21 +45,19 @@ function setActive(view) {
 }
 
 function bindNav() {
-  // Click-Handler für beide Varianten registrieren
-  const hook = (btn) => btn.addEventListener('click', () => {
-    const view = btn.dataset.view;
-    if (!view) return;
-    setActive(view);
+  document.querySelectorAll('.nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const view = btn.dataset.view;
+      if (!view) return;
+      setActive(view);
+    });
   });
 
-  document.querySelectorAll('.seg').forEach(hook);
-  document.querySelectorAll('.nav-icon, .nav-btn').forEach(hook);
-
-  // Event Delegation fallback für dynamische Buttons
-  const bottomNav = document.querySelector('.bottom-nav, .footer-nav');
+  // Event Delegation für dynamische Buttons
+  const bottomNav = document.querySelector('.bottom-nav');
   if (bottomNav) {
     bottomNav.addEventListener('click', (e) => {
-      const btn = e.target.closest('.nav-icon, .nav-btn');
+      const btn = e.target.closest('.nav-btn');
       if (btn && btn.dataset.view) setActive(btn.dataset.view);
     });
   }
