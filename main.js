@@ -1,4 +1,3 @@
-
 /* main.js - Router, UI bindings */
 import {
   storeReady, getProfile, setProfile,
@@ -26,9 +25,23 @@ const el = (tag, attrs={}, ...children)=> {
   return e;
 };
 
+/* ---- Navigation ---- */
 function setActive(view) {
-  document.querySelectorAll('.seg').forEach(btn=> btn.classList.toggle('active', btn.dataset.view===view));
-  document.querySelectorAll('.view').forEach(v=> v.classList.toggle('active', v.id === 'view-' + view));
+  // Active-State für alte Header-Navigation (.seg)
+  document.querySelectorAll('.seg').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+  });
+  // Active-State für neue Bottom-Navigation (.nav-icon / .nav-btn)
+  document.querySelectorAll('.nav-icon, .nav-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+  });
+
+  // Views umschalten
+  document.querySelectorAll('.view').forEach(v => {
+    v.classList.toggle('active', v.id === 'view-' + view);
+  });
+
+  // Lazy refresh je nach View
   if (view==='dashboard') refreshDashboard();
   if (view==='history') refreshHistory();
   if (view==='settings') refreshSettings();
@@ -36,9 +49,27 @@ function setActive(view) {
 }
 
 function bindNav() {
-  document.querySelectorAll('.seg').forEach(btn=> btn.addEventListener('click', ()=> setActive(btn.dataset.view)));
+  // Click-Handler für beide Varianten registrieren
+  const hook = (btn) => btn.addEventListener('click', () => {
+    const view = btn.dataset.view;
+    if (!view) return;
+    setActive(view);
+  });
+
+  document.querySelectorAll('.seg').forEach(hook);
+  document.querySelectorAll('.nav-icon, .nav-btn').forEach(hook);
+
+  // Event Delegation fallback für dynamische Buttons
+  const bottomNav = document.querySelector('.bottom-nav, .footer-nav');
+  if (bottomNav) {
+    bottomNav.addEventListener('click', (e) => {
+      const btn = e.target.closest('.nav-icon, .nav-btn');
+      if (btn && btn.dataset.view) setActive(btn.dataset.view);
+    });
+  }
 }
 
+/* ---- Helpers ---- */
 function todayStr() {
   const t = new Date();
   const m = String(t.getMonth()+1).padStart(2,'0');
@@ -46,6 +77,7 @@ function todayStr() {
   return `${t.getFullYear()}-${m}-${d}`;
 }
 
+/* ---- Entry Form ---- */
 function initEntryForm() {
   $('#e-date').value = todayStr();
   $('#e-mood').oninput = (e)=> $('#e-mood-val').textContent = e.target.value;
@@ -192,6 +224,7 @@ async function submitEntry(e) {
   }
 }
 
+/* ---- Dashboard / History / Settings ---- */
 async function refreshDashboard() {
   const entries = await listEntries();
   const k = computeKPIs(entries);
@@ -344,6 +377,7 @@ function bindSettings() {
   $('#btn-pdf').onclick = ()=> handleExportPDF('Gefilterter Zeitraum oder Gesamt');
 }
 
+/* ---- Storage Check ---- */
 async function detectStorageWarning() {
   const info = await storeReady();
   const el = document.getElementById('storage-warning');
@@ -355,6 +389,7 @@ async function detectStorageWarning() {
   }
 }
 
+/* ---- Boot ---- */
 async function boot() {
   bindNav();
   bindSettings();
