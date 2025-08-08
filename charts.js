@@ -1,7 +1,7 @@
 /* charts.js - KPIs and charts */
 import { listEntries } from './store.js';
 
-let moodLineChart, sleepScatterChart;
+let moodLineChart, positiveTagsChart;
 
 function average(arr) {
   if (!arr.length) return null;
@@ -39,10 +39,43 @@ export function computeTriggers(entries) {
     if (prev.length < 3) continue;
     const ma = prev.reduce((a,e)=>a+(Number(e.mood)||0),0)/prev.length;
     if ((Number(cur.mood)||0) <= ma - 1) {
-      out.push({ date: cur.date, mood: Number(cur.mood)||0, baseline: +ma.toFixed(2) });
+      out.push({
+        date: cur.date,
+        mood: Number(cur.mood)||0,
+        baseline: +ma.toFixed(2),
+        anxiety: Number(cur.anxiety) || null,
+        sleepHours: cur.sleepHours ?? null,
+        tags: Array.isArray(cur.tags) ? cur.tags : [],
+        notes: cur.notes || '',
+        meds: Array.isArray(cur.meds) ? cur.meds : []
+      });
     }
   }
   return out;
+}
+
+function computePositiveTagCounts(entries) {
+  const moods = entries.map(e => Number(e.mood)).filter(n => !isNaN(n));
+  if (!moods.length) return { labels: [], counts: [] };
+  const avg = moods.reduce((a,b)=>a+b,0) / moods.length;
+
+  const counts = {};
+  entries.forEach(e => {
+    const mood = Number(e.mood);
+    if (!isNaN(mood) && mood > avg && Array.isArray(e.tags)) {
+      e.tags.forEach(tag => {
+        const t = String(tag).trim();
+        if (!t) return;
+        counts[t] = (counts[t] || 0) + 1;
+      });
+    }
+  });
+
+  const pairs = Object.entries(counts).sort((a,b)=> b[1]-a[1]).slice(0,12);
+  return {
+    labels: pairs.map(p=>p[0]),
+    counts: pairs.map(p=>p[1])
+  };
 }
 
 export async function renderCharts() {
@@ -50,65 +83,69 @@ export async function renderCharts() {
   const sorted = entries.slice().sort((a,b)=>new Date(a.date)-new Date(b.date));
   const labels = sorted.map(e=>e.date);
   const moodData = sorted.map(e=>Number(e.mood)||null);
-  const sleepPoints = sorted.filter(e=>e.sleepHours!=null && e.sleepHours!=="")
-    .map(e=>({ x: Number(e.sleepHours), y: Number(e.mood)||null }));
 
   // --- Mood line ---
   const ctx1 = document.getElementById('moodLine');
-
-  if (moodLineChart) {
-    moodLineChart.destroy();
-  }
-  const ctx1ctx = ctx1.getContext('2d');
-  ctx1ctx.clearRect(0, 0, ctx1.width, ctx1.height);
-
-  moodLineChart = new Chart(ctx1, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Stimmung',
-        data: moodData,
-        tension: 0.35,
-        spanGaps: true,
-        pointRadius: 2
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false, // wichtig für festen Container
-      animation: false, // optional: sofort zeichnen ohne „wachsen“
-      scales: {
-        y: { min:1, max:10, ticks:{ stepSize:1 } }
+  if (ctx1) {
+    if (moodLineChart) moodLineChart.destroy();
+    const g = ctx1.getContext('2d');
+    g.clearRect(0, 0, ctx1.width, ctx1.height);
+    moodLineChart = new Chart(ctx1, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Stimmung',
+          data: moodData,
+          tension: 0.35,
+          spanGaps: true,
+          pointRadius: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          y: { min:1, max:10, ticks:{ stepSize:1 } }
+        }
       }
-    }
-  });
-
-  // --- Sleep scatter ---
-  const ctx2 = document.getElementById('sleepScatter');
-
-  if (sleepScatterChart) {
-    sleepScatterChart.destroy();
+    });
   }
-  const ctx2ctx = ctx2.getContext('2d');
-  ctx2ctx.clearRect(0, 0, ctx2.width, ctx2.height);
 
-  sleepScatterChart = new Chart(ctx2, {
-    type: 'scatter',
-    data: {
-      datasets: [{
-        label: 'Schlaf ↔ Stimmung',
-        data: sleepPoints
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: false,
-      scales: {
-        x: { title: { display:true, text:'Schlaf (h)' }, min:0, max: 12 },
-        y: { title: { display:true, text:'Stimmung' }, min:1, max:10, ticks:{ stepSize:1 } }
+  // --- Positive Tags Ranking (Bar) ---
+  const ctxTags = document.getElementById('positiveTags');
+  if (ctxTags) {
+    if (positiveTagsChart) positiveTagsChart.destroy();
+    const { labels: tagLabels, counts } = computePositiveTagCounts(entries);
+    const g2 = ctxTags.getContext('2d');
+    g2.clearRect(0, 0, ctxTags.width, ctxTags.height);
+
+    positiveTagsChart = new Chart(ctxTags, {
+      type: 'bar',
+      data: {
+        labels: tagLabels,
+        datasets: [{
+          label: 'Häufigkeit auf >Ø-Tagen',
+          data: counts
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        animation: false,
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } }
+        },
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx)=> ` ${ctx.raw}x`
+            }
+          }
+        }
       }
-    }
-  });
+    });
+  }
 }
