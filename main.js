@@ -248,13 +248,29 @@ async function refreshDashboard() {
 
   await renderCharts();
 
+  // Trigger als Accordion mit mehr Details
   const triggers = computeTriggers(entries);
-  const ul = $('#trigger-list'); if (ul) {
-    ul.innerHTML='';
-    triggers.slice(-50).reverse().forEach(t=>{
-      const li = document.createElement('li');
-      li.textContent = `${t.date}: Stimmung ${t.mood} (7T-Ø ${t.baseline})`;
-      ul.appendChild(li);
+  const wrap = $('#trigger-accordion');
+  if (wrap) {
+    wrap.innerHTML = '';
+    triggers.slice(-50).reverse().forEach(t => {
+      const delta = +(t.mood - t.baseline).toFixed(2);
+      const summary = el('summary', {},
+        `${t.date} · Stimmung ${t.mood} (7T-Ø ${t.baseline}) `,
+        el('span', { style:`color:${delta<=-1 ? '#ff6b6b' : '#aaa'};margin-left:6px;` }, `${delta}`)
+      );
+
+      const medsTxt = (t.meds||[]).map(m=>`${m.name}${m.dose?(' '+m.dose):''}`).join(', ') || '—';
+      const detailsBox = el('div', { style:'font-size:14px;line-height:1.5;margin-top:6px;' },
+        el('div', {}, `Angst: ${t.anxiety ?? '—'}`),
+        el('div', {}, `Schlaf: ${t.sleepHours ?? '—'} h`),
+        el('div', {}, `Tags: ${(t.tags||[]).join(', ') || '—'}`),
+        el('div', {}, `Medikation: ${medsTxt}`),
+        t.notes ? el('div', {}, `Notiz: ${t.notes}`) : el('div', {style:'color:#888'}, 'Keine Notiz')
+      );
+
+      const details = el('details', { class:'trigger-item' }, summary, detailsBox);
+      wrap.appendChild(details);
     });
   }
 }
@@ -402,9 +418,7 @@ function bindSettings() {
 }
 
 /* ---------------------------------------
-   TO-DO LISTE (localStorage-basiert)
-   -> Schnell funktionsfähig. Wenn du willst,
-      portiere ich das als Nächstes in IndexedDB (store.js).
+   TO-DO LISTE (localStorage)
 ---------------------------------------- */
 const TODOS_KEY = 'leomind_todos_v1';
 
@@ -418,7 +432,6 @@ function loadTodos() {
 function saveTodos(list) {
   localStorage.setItem(TODOS_KEY, JSON.stringify(list));
 }
-
 function addTodo(text) {
   const list = loadTodos();
   const todo = {
@@ -440,7 +453,6 @@ function deleteTodo(id) {
   const list = loadTodos().filter(t => t.id !== id);
   saveTodos(list);
 }
-
 function refreshTodo() {
   const ul = $('#todo-list');
   if (!ul) return;
@@ -462,7 +474,6 @@ function refreshTodo() {
     ul.appendChild(li);
   });
 }
-
 function bindTodo() {
   const addBtn = $('#todo-add');
   const input = $('#todo-text');
@@ -507,7 +518,7 @@ async function boot() {
   bindNav();
   bindSettings();
   initEntryForm();
-  bindTodo();              // << To-Do-Events aktivieren
+  bindTodo();
   detectStorageWarning();
 
   setActive('dashboard');
@@ -521,7 +532,6 @@ async function boot() {
   await refreshMedOptions();
   await refreshTagsCache();
   await refreshDashboard();
-  // Falls To-Do-View initial sichtbar ist (Deep Link), einmal rendern:
   refreshTodo();
 }
 
