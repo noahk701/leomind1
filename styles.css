@@ -202,12 +202,10 @@ textarea { resize: vertical; }
   border-radius: 12px;
 }
 
-/* 📊 Charts fix: fester Container + Canvas 100% */
-.card.charts .chart-wrap {
-  height: 250px;
-  position: relative;
-}
+/* Charts fix: fester Container + Canvas 100% */
+.card.charts { height: 250px; position: relative; }
 .card.charts canvas {
   width: 100% !important;
   height: 100% !important;
+  display: block;
 }
