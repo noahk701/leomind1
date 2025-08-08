@@ -139,6 +139,18 @@
       </section>
     </section>
 
+    <!-- To-Do List -->
+    <section id="view-todo" class="view">
+      <section class="card">
+        <h2>To-Do Liste</h2>
+        <div class="todo-input">
+          <input type="text" id="todo-text" placeholder="Neues To-Do eingeben">
+          <button id="todo-add" class="btn primary">Hinzufügen</button>
+        </div>
+        <ul id="todo-list" class="list"></ul>
+      </section>
+    </section>
+
     <!-- Settings -->
     <section id="view-settings" class="view">
       <section class="card">
@@ -193,6 +205,9 @@
     </button>
     <button data-view="history" class="nav-btn" aria-label="Historie">
       <span class="material-icons-outlined">history</span>
+    </button>
+    <button data-view="todo" class="nav-btn" aria-label="To-Do Liste">
+      <span class="material-icons-outlined">checklist</span>
     </button>
     <button data-view="settings" class="nav-btn" aria-label="Einstellungen">
       <span class="material-icons-outlined">settings</span>
