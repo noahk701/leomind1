@@ -1,5 +1,5 @@
 /* sw.js - simple precache for LeoMind */
-const LEOMIND_CACHE = 'leomind1'; // bump on updates
+const LEOMIND_CACHE = 'leomind2'; // bump on updates
 const ASSETS = [
   './', './index.html', './styles.css', './main.js', './store.js', './charts.js', './export.js',
   './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'
