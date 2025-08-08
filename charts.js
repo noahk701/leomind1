@@ -1,4 +1,3 @@
-
 /* charts.js - KPIs and charts */
 import { listEntries } from './store.js';
 
@@ -21,7 +20,6 @@ export function computeKPIs(entries) {
   const avg30 = average(moods.filter(m=>withinDays(m.date,30)).map(m=>m.mood));
   const avg90 = average(moods.filter(m=>withinDays(m.date,90)).map(m=>m.mood));
 
-  // Trend = last mood - avg of previous 7 days (excluding last day)
   let trend = null;
   if (moods.length >= 2) {
     const last = moods[moods.length-1];
@@ -55,10 +53,15 @@ export async function renderCharts() {
   const sleepPoints = sorted.filter(e=>e.sleepHours!=null && e.sleepHours!=="")
     .map(e=>({ x: Number(e.sleepHours), y: Number(e.mood)||null }));
 
-  // Mood line
+  // --- Mood line ---
   const ctx1 = document.getElementById('moodLine');
-  if (moodLineChart) moodLineChart.destroy();
-  ctx1.getContext('2d').clearRect(0, 0, ctx1.width, ctx1.height);
+
+  if (moodLineChart) {
+    moodLineChart.destroy();
+  }
+  const ctx1ctx = ctx1.getContext('2d');
+  ctx1ctx.clearRect(0, 0, ctx1.width, ctx1.height);
+
   moodLineChart = new Chart(ctx1, {
     type: 'line',
     data: {
@@ -73,17 +76,23 @@ export async function renderCharts() {
     },
     options: {
       responsive: true,
-      maintainAspectRatio: false,
+      maintainAspectRatio: false, // wichtig für festen Container
+      animation: false, // optional: sofort zeichnen ohne „wachsen“
       scales: {
         y: { min:1, max:10, ticks:{ stepSize:1 } }
       }
     }
   });
 
-  // Sleep scatter
+  // --- Sleep scatter ---
   const ctx2 = document.getElementById('sleepScatter');
-  if (sleepScatterChart) sleepScatterChart.destroy();
-  ctx2.getContext('2d').clearRect(0, 0, ctx2.width, ctx2.height);
+
+  if (sleepScatterChart) {
+    sleepScatterChart.destroy();
+  }
+  const ctx2ctx = ctx2.getContext('2d');
+  ctx2ctx.clearRect(0, 0, ctx2.width, ctx2.height);
+
   sleepScatterChart = new Chart(ctx2, {
     type: 'scatter',
     data: {
@@ -95,6 +104,7 @@ export async function renderCharts() {
     options: {
       responsive: true,
       maintainAspectRatio: false,
+      animation: false,
       scales: {
         x: { title: { display:true, text:'Schlaf (h)' }, min:0, max: 12 },
         y: { title: { display:true, text:'Stimmung' }, min:1, max:10, ticks:{ stepSize:1 } }
