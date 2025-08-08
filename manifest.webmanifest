@@ -1,7 +1,7 @@
 {
   "name": "LeoMind",
   "short_name": "LeoMind",
-  "start_url": ".",
+  "start_url": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#ffffff",
@@ -18,6 +18,5 @@
       "type": "image/png",
       "purpose": "any maskable"
     }
-  ],
-  "scope": "."
+  ]
 }

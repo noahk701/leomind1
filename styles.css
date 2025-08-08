@@ -15,18 +15,21 @@ html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text); f
 .app-header {
   position: sticky; top: 0; z-index: 10;
   backdrop-filter: saturate(180%) blur(12px);
-  background: rgba(255,255,255,0.8);
+  background: rgba(255,255,255,0.86);
   border-bottom: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: space-between;
+  display: grid; grid-template-columns: 1fr; gap: 8px;
   padding: 10px 12px;
 }
 .brand { display: flex; align-items: center; gap: 8px; font-weight: 600; }
 .dot { width: 10px; height: 10px; background: var(--primary); border-radius: 50%; display: inline-block; }
 .logo-text { letter-spacing: .2px; }
-.segmented { display: flex; gap: 6px; }
+.segmented { display: flex; gap: 8px; overflow-x: auto; -webkit-overflow-scrolling: touch; padding-bottom: 2px; }
+.segmented::-webkit-scrollbar { display: none; }
 .seg {
+  flex: 0 0 auto;
   border: 1px solid var(--border); background: var(--surface);
-  padding: 8px 10px; border-radius: 9px; font-size: 14px;
+  padding: 10px 12px; border-radius: 10px; font-size: 14px;
+  min-width: 44px; min-height: 36px;
 }
 .seg.active { background: var(--bg); border-color: var(--primary); color: var(--primary); }
 
@@ -36,6 +39,7 @@ main { padding: 12px; max-width: 1000px; margin: 0 auto; }
 .grid { display: grid; gap: var(--space); grid-template-columns: 1fr; }
 .grid-2 { display: grid; grid-template-columns: 1fr; gap: var(--space); }
 @media (min-width: 900px) {
+  .app-header { grid-template-columns: auto 1fr; align-items: center; }
   .grid { grid-template-columns: 1fr 1fr; }
   .grid-2 { grid-template-columns: 1fr 1fr; }
 }
@@ -48,7 +52,8 @@ main { padding: 12px; max-width: 1000px; margin: 0 auto; }
   box-shadow: 0 1px 0 rgba(0,0,0,0.02);
 }
 .card h2 { margin: 0 0 10px 0; font-size: 18px; }
-.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.kpi-row { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+@media (min-width: 600px) { .kpi-row { grid-template-columns: repeat(4, 1fr); } }
 .kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; }
 .kpi-label { color: var(--muted); font-size: 12px; }
 .kpi-value { font-size: 22px; font-weight: 600; margin-top: 4px; }
@@ -60,13 +65,18 @@ main { padding: 12px; max-width: 1000px; margin: 0 auto; }
 
 label { display: block; font-size: 14px; margin: 10px 0; }
 input[type="text"], input[type="number"], input[type="date"], input[type="time"], select, textarea {
-  width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
+  width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 10px; background: var(--bg);
 }
 textarea { resize: vertical; }
 
-.btn { border: 1px solid var(--border); background: var(--surface); padding: 10px 14px; border-radius: 12px; }
+.btn { border: 1px solid var(--border); background: var(--surface); padding: 12px 14px; border-radius: 12px; min-height: 44px; }
 .btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
 .btn.ghost { background: transparent; }
+.btn.full { width: 100%; }
+.full-sm { width: 100%; }
+@media (min-width: 520px) { .full-sm { width: auto; } }
+
+.form-actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
 .app-footer { text-align: center; padding: 18px; color: var(--muted); }
 
@@ -74,7 +84,7 @@ textarea { resize: vertical; }
 .chip { display: inline-flex; align-items: center; gap: 6px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); }
 .chip button { border: 0; background: transparent; font-size: 14px; }
 
-.suggestions { display: none; position: absolute; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-top: 4px; overflow: hidden; z-index: 5; }
+.suggestions { display: none; position: absolute; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; margin-top: 4px; overflow: hidden; z-index: 5; max-width: 90vw; }
 .suggestions.show { display: block; }
 .suggestions div { padding: 8px 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
 .suggestions div:last-child { border-bottom: 0; }
@@ -90,13 +100,7 @@ textarea { resize: vertical; }
 .switch input:checked:before { transform: translateX(14px); background: var(--primary); }
 
 .warning { background: #fff6e6; border: 1px solid #ffd699; color: #6b4e00; padding: 10px 12px; border-radius: 12px; }
-.form-actions { display: flex; gap: 10px; margin-top: 10px; }
-/* Fix für Chart-„Kaugummi“-Bug */
-.card.charts {
-  height: 250px; /* feste Höhe */
-  position: relative; /* nötig für Chart.js Layout */
-}
-.card.charts canvas {
-  width: 100% !important;
-  height: 100% !important;
-}
+
+/* Charts fix: fester Container + Canvas 100% */
+.card.charts .chart-wrap { height: 250px; position: relative; }
+.card.charts canvas { width: 100% !important; height: 100% !important; }

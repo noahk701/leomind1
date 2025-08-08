@@ -6,9 +6,7 @@ async function download(filename, text) {
   const blob = new Blob([text], { type: 'application/json;charset=utf-8' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  a.href = url;
-  a.download = filename;
-  a.click();
+  a.href = url; a.download = filename; a.click();
   URL.revokeObjectURL(url);
 }
 
@@ -22,7 +20,6 @@ export async function handleExportPDF(rangeText='Gesamt') {
   const profile = await getProfile();
   const { jsPDF } = window.jspdf;
 
-  // build simple layout section
   const tmp = document.createElement('div');
   tmp.style.padding = '16px';
   tmp.style.fontFamily = getComputedStyle(document.body).fontFamily;
@@ -54,13 +51,10 @@ export async function handleExportPDF(rangeText='Gesamt') {
   `;
   document.body.appendChild(tmp);
 
-  // KPIs from DOM
   function addKpi(label, value) {
     const div = document.createElement('div');
-    div.style.border = '1px solid #eee';
-    div.style.borderRadius = '10px';
-    div.style.padding = '8px 10px';
-    div.style.background = '#fafafa';
+    div.style.border = '1px solid #eee'; div.style.borderRadius = '10px';
+    div.style.padding = '8px 10px'; div.style.background = '#fafafa';
     div.innerHTML = `<div style="color:#666;font-size:11px">${label}</div><div style="font-size:16px;font-weight:600">${value??'–'}</div>`;
     tmp.querySelector('#pdf-kpis').appendChild(div);
   }
@@ -69,33 +63,25 @@ export async function handleExportPDF(rangeText='Gesamt') {
   addKpi('Ø 90 Tage', document.getElementById('kpi-avg90').textContent);
   addKpi('Trend', document.getElementById('kpi-trend').textContent);
 
-  // clone canvases
   function cloneCanvas(id) {
     const orig = document.getElementById(id);
     const c = document.createElement('canvas');
     c.width = orig.width; c.height = orig.height;
-    const ctx = c.getContext('2d');
-    ctx.drawImage(orig, 0, 0);
+    const ctx = c.getContext('2d'); ctx.drawImage(orig, 0, 0);
     return c;
   }
-
   tmp.querySelector('#pdf-chart1').appendChild(cloneCanvas('moodLine'));
   tmp.querySelector('#pdf-chart2').appendChild(cloneCanvas('sleepScatter'));
 
-  // rows
   const rows = tmp.querySelector('#pdf-rows');
   for (const e of entries) {
     const meds = (e.meds||[]).map(m=>`${m.name}${m.dose?(' '+m.dose):''}`).join(', ');
     const phqSum = Array.isArray(e.phq) ? e.phq.reduce((a,b)=>a+(Number(b)||0),0) : (e.phqSum ?? '');
     const tr = document.createElement('tr');
-    const cells = [
-      e.date, e.mood??'', e.anxiety??'', phqSum,
-      e.sleepHours??'', (e.tags||[]).join(', '), meds, (e.notes||'')
-    ];
+    const cells = [ e.date, e.mood??'', e.anxiety??'', phqSum, e.sleepHours??'', (e.tags||[]).join(', '), meds, (e.notes||'') ];
     cells.forEach(t=>{
       const td = document.createElement('td');
-      td.style.borderBottom = '1px solid #f0f0f0'; td.style.padding = '6px';
-      td.textContent = String(t);
+      td.style.borderBottom = '1px solid #f0f0f0'; td.style.padding = '6px'; td.textContent = String(t);
       tr.appendChild(td);
     });
     rows.appendChild(tr);
@@ -103,25 +89,12 @@ export async function handleExportPDF(rangeText='Gesamt') {
 
   const canvas = await html2canvas(tmp, { backgroundColor:'#fff', scale:2 });
   const imgData = canvas.toDataURL('image/png');
-
   const pdf = new jsPDF({ unit:'pt', format:'a4' });
   const pageW = pdf.internal.pageSize.getWidth();
-  const pageH = pdf.internal.pageSize.getHeight();
-
-  // Fit image to width
-  const ratio = canvas.height / canvas.width;
   const imgW = pageW - 40;
+  const ratio = canvas.height / canvas.width;
   const imgH = imgW * ratio;
-  let y = 20;
-  pdf.addImage(imgData, 'PNG', 20, y, imgW, imgH);
-  // add additional pages if needed
-  while (y + imgH > pageH - 20) {
-    pdf.addPage();
-    y = 20;
-    // (for simplicity, we rendered all as one tall image; single page add already has full image)
-    break;
-  }
-
+  pdf.addImage(imgData, 'PNG', 20, 20, imgW, imgH);
   pdf.save(`LeoMind-Report-${rangeText.replaceAll(' ','_')}.pdf`);
   tmp.remove();
 }
