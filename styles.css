@@ -228,3 +228,35 @@ input[type="range"] { accent-color: var(--primary); }
 .material-icons-outlined {
   font-size: 26px;
 }
+
+/* ===== TODO LIST STYLING ===== */
+.todo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.todo-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+.todo-item.completed {
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+.todo-actions {
+  display: flex;
+  gap: 6px;
+}
+.todo-actions button {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 16px;
+  cursor: pointer;
+}
