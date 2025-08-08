@@ -25,23 +25,22 @@ const el = (tag, attrs={}, ...children)=> {
   return e;
 };
 
-/* ---- Navigation ---- */
+/* ---------------------------------------
+   NAVIGATION
+---------------------------------------- */
 function setActive(view) {
-  // Active-State nur noch für neue Bottom-Navigation
   document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.view === view);
   });
-
-  // Views umschalten
   document.querySelectorAll('.view').forEach(v => {
     v.classList.toggle('active', v.id === 'view-' + view);
   });
 
-  // Lazy refresh je nach View
   if (view==='dashboard') refreshDashboard();
   if (view==='history') refreshHistory();
   if (view==='settings') refreshSettings();
   if (view==='entry') initEntryForm();
+  if (view==='todo') refreshTodo();
 }
 
 function bindNav() {
@@ -52,8 +51,6 @@ function bindNav() {
       setActive(view);
     });
   });
-
-  // Event Delegation für dynamische Buttons
   const bottomNav = document.querySelector('.bottom-nav');
   if (bottomNav) {
     bottomNav.addEventListener('click', (e) => {
@@ -63,7 +60,9 @@ function bindNav() {
   }
 }
 
-/* ---- Helpers ---- */
+/* ---------------------------------------
+   HELPERS
+---------------------------------------- */
 function todayStr() {
   const t = new Date();
   const m = String(t.getMonth()+1).padStart(2,'0');
@@ -71,29 +70,40 @@ function todayStr() {
   return `${t.getFullYear()}-${m}-${d}`;
 }
 
-/* ---- Entry Form ---- */
+/* ---------------------------------------
+   ENTRY FORM
+---------------------------------------- */
 function initEntryForm() {
-  $('#e-date').value = todayStr();
-  $('#e-mood').oninput = (e)=> $('#e-mood-val').textContent = e.target.value;
-  $('#e-anxiety').oninput = (e)=> $('#e-anxiety-val').textContent = e.target.value;
+  const dateEl = $('#e-date');
+  if (dateEl) dateEl.value = todayStr();
+
+  const mood = $('#e-mood');
+  const anx = $('#e-anxiety');
+  if (mood) mood.oninput = (e)=> $('#e-mood-val').textContent = e.target.value;
+  if (anx) anx.oninput = (e)=> $('#e-anxiety-val').textContent = e.target.value;
 
   const input = $('#e-tag-input');
   const sugg = $('#e-tag-suggestions');
-  input.onkeydown = (e)=>{
-    if (e.key==='Enter') { e.preventDefault(); addChip(input.value.trim()); input.value=''; sugg.classList.remove('show'); }
-  };
-  input.oninput = ()=>{
-    const q = input.value.trim().toLowerCase();
-    if (!q) { sugg.classList.remove('show'); return; }
-    const matches = tagsCache.filter(t=>t.toLowerCase().includes(q)).slice(0,6);
-    sugg.innerHTML = '';
-    matches.forEach(m=> sugg.appendChild(el('div',{ onclick:()=>{ addChip(m); input.value=''; sugg.classList.remove('show'); }}, m)));
-    if (matches.length) sugg.classList.add('show'); else sugg.classList.remove('show');
-  };
+  if (input && sugg) {
+    input.onkeydown = (e)=>{
+      if (e.key==='Enter') { e.preventDefault(); addChip(input.value.trim()); input.value=''; sugg.classList.remove('show'); }
+    };
+    input.oninput = ()=>{
+      const q = input.value.trim().toLowerCase();
+      if (!q) { sugg.classList.remove('show'); return; }
+      const matches = tagsCache.filter(t=>t.toLowerCase().includes(q)).slice(0,6);
+      sugg.innerHTML = '';
+      matches.forEach(m=> sugg.appendChild(el('div',{ onclick:()=>{ addChip(m); input.value=''; sugg.classList.remove('show'); }}, m)));
+      if (matches.length) sugg.classList.add('show'); else sugg.classList.remove('show');
+    };
+  }
 
-  $('#add-med').onclick = ()=> addMedRow();
+  const addMedBtn = $('#add-med');
+  if (addMedBtn) addMedBtn.onclick = ()=> addMedRow();
+
   renderPHQ();
-  $('#clear-form').onclick = clearForm;
+  const clearBtn = $('#clear-form');
+  if (clearBtn) clearBtn.onclick = clearForm;
   refreshMedOptions();
   renderChips([]);
 }
@@ -106,7 +116,8 @@ function addChip(tag) {
 }
 
 function renderChips(tags) {
-  const wrap = $('#e-tags'); wrap.innerHTML='';
+  const wrap = $('#e-tags'); if (!wrap) return;
+  wrap.innerHTML='';
   tags.forEach(t=> wrap.appendChild(el('span',{class:'chip','data-tag':t}, t, el('button',{onclick:()=>{
     const rest = Array.from(document.querySelectorAll('#e-tags .chip')).map(c=>c.dataset.tag).filter(x=>x!==t);
     renderChips(rest);
@@ -114,7 +125,8 @@ function renderChips(tags) {
 }
 
 function renderPHQ() {
-  const wrap = $('#phq-questions'); wrap.innerHTML='';
+  const wrap = $('#phq-questions'); if (!wrap) return;
+  wrap.innerHTML='';
   const labels = [
     'Wenig Interesse oder Freude',
     'Niedergeschlagen, deprimiert',
@@ -129,7 +141,7 @@ function renderPHQ() {
   const valEl = $('#phq-sum');
   const recalc = ()=>{
     const sum = Array.from(wrap.querySelectorAll('input[type=radio]:checked')).reduce((a,r)=>a+Number(r.value),0);
-    valEl.textContent = String(sum);
+    if (valEl) valEl.textContent = String(sum);
   };
   labels.forEach((lab,i)=>{
     const row = el('div',{},
@@ -143,12 +155,13 @@ function renderPHQ() {
 }
 
 function addMedRow(val={ name:'', dose:'' }) {
+  const container = $('#med-rows'); if (!container) return;
   const row = el('div', { class:'grid-2 med-row' },
     el('select',{ class:'med-name' }),
     el('input',{ class:'med-dose', placeholder:'Dosis' }),
   );
   row.querySelector('.med-dose').value = val.dose||'';
-  $('#med-rows').appendChild(row);
+  container.appendChild(row);
   populateMedSelect(row.querySelector('.med-name'), val.name||'');
 }
 
@@ -156,10 +169,11 @@ async function refreshMedOptions() {
   medsCache = await listMeds(true);
   document.querySelectorAll('select.med-name').forEach(sel => populateMedSelect(sel, sel.value));
   const f = $('#f-med');
-  f.innerHTML = '<option value="">Alle</option>' + medsCache.map(m=>`<option value="${m.name}">${m.name}</option>`).join('');
+  if (f) f.innerHTML = '<option value="">Alle</option>' + medsCache.map(m=>`<option value="${m.name}">${m.name}</option>`).join('');
 }
 
 function populateMedSelect(select, current='') {
+  if (!select) return;
   select.innerHTML = '<option value="">–</option>' + medsCache.map(m=>`<option value="${m.name}">${m.name}</option>`).join('');
   select.value = current || '';
 }
@@ -173,20 +187,23 @@ async function refreshTagsCache() {
 
 function clearForm() {
   editingId = null;
-  $('#entry-form').reset();
-  $('#e-date').value = todayStr();
-  $('#e-mood-val').textContent = '5';
-  $('#e-anxiety-val').textContent = '5';
+  const form = $('#entry-form');
+  if (form) form.reset();
+  const dateEl = $('#e-date'); if (dateEl) dateEl.value = todayStr();
+  const mv = $('#e-mood-val'); if (mv) mv.textContent = '5';
+  const av = $('#e-anxiety-val'); if (av) av.textContent = '5';
   renderChips([]);
-  $('#med-rows').innerHTML='';
+  const medRows = $('#med-rows'); if (medRows) medRows.innerHTML='';
   renderPHQ();
 }
 
 async function submitEntry(e) {
   e.preventDefault();
   try {
-    const tags = Array.from(document.querySelectorAll('#e-tags .chip')).map(c=>c.dataset.tag);
-    const meds = Array.from(document.querySelectorAll('#med-rows .med-row')).map(r=> ({
+    const chips = Array.from(document.querySelectorAll('#e-tags .chip'));
+    const tags = chips.map(c=>c.dataset.tag);
+    const medRows = Array.from(document.querySelectorAll('#med-rows .med-row'));
+    const meds = medRows.map(r=> ({
       name: r.querySelector('.med-name').value,
       dose: r.querySelector('.med-dose').value
     })).filter(m=>m.name);
@@ -199,11 +216,11 @@ async function submitEntry(e) {
 
     const payload = {
       id: editingId || undefined,
-      date: $('#e-date').value,
-      mood: Number($('#e-mood').value),
-      anxiety: Number($('#e-anxiety').value),
-      sleepHours: $('#e-sleep').value ? Number($('#e-sleep').value) : null,
-      notes: $('#e-notes').value || '',
+      date: $('#e-date')?.value,
+      mood: Number($('#e-mood')?.value),
+      anxiety: Number($('#e-anxiety')?.value),
+      sleepHours: $('#e-sleep')?.value ? Number($('#e-sleep')?.value) : null,
+      notes: $('#e-notes')?.value || '',
       tags, meds,
       phq: phq.every(v=>v===null) ? undefined : phq
     };
@@ -214,11 +231,13 @@ async function submitEntry(e) {
     clearForm();
     setActive('dashboard');
   } catch (err) {
-    alert('Fehler beim Speichern: ' + err.message);
+    alert('Fehler beim Speichern: ' + (err?.message || err));
   }
 }
 
-/* ---- Dashboard / History / Settings ---- */
+/* ---------------------------------------
+   DASHBOARD / HISTORY / SETTINGS
+---------------------------------------- */
 async function refreshDashboard() {
   const entries = await listEntries();
   const k = computeKPIs(entries);
@@ -230,22 +249,25 @@ async function refreshDashboard() {
   await renderCharts();
 
   const triggers = computeTriggers(entries);
-  const ul = $('#trigger-list'); ul.innerHTML='';
-  triggers.slice(-50).reverse().forEach(t=>{
-    const li = document.createElement('li');
-    li.textContent = `${t.date}: Stimmung ${t.mood} (7T-Ø ${t.baseline})`;
-    ul.appendChild(li);
-  });
+  const ul = $('#trigger-list'); if (ul) {
+    ul.innerHTML='';
+    triggers.slice(-50).reverse().forEach(t=>{
+      const li = document.createElement('li');
+      li.textContent = `${t.date}: Stimmung ${t.mood} (7T-Ø ${t.baseline})`;
+      ul.appendChild(li);
+    });
+  }
 }
 
 async function refreshHistory() {
   const entries = await listEntries();
-  const tbody = $('#history-table tbody'); tbody.innerHTML='';
+  const tbody = $('#history-table tbody'); if (!tbody) return;
+  tbody.innerHTML='';
 
-  const from = $('#f-from').value ? new Date($('#f-from').value) : null;
-  const to = $('#f-to').value ? new Date($('#f-to').value) : null;
-  const fTag = $('#f-tag').value.trim().toLowerCase();
-  const fMed = $('#f-med').value;
+  const from = $('#f-from')?.value ? new Date($('#f-from').value) : null;
+  const to = $('#f-to')?.value ? new Date($('#f-to').value) : null;
+  const fTag = $('#f-tag')?.value.trim().toLowerCase() || '';
+  const fMed = $('#f-med')?.value || '';
 
   const filtered = entries.filter(e=>{
     const d = new Date(e.date);
@@ -283,7 +305,7 @@ async function refreshHistory() {
       $('#e-sleep').value = e.sleepHours ?? '';
       $('#e-notes').value = e.notes || '';
       renderChips(e.tags||[]);
-      $('#med-rows').innerHTML='';
+      const container = $('#med-rows'); if (container) container.innerHTML='';
       (e.meds||[]).forEach(m=> addMedRow(m));
       renderPHQ();
       if (Array.isArray(e.phq)) {
@@ -306,38 +328,44 @@ async function refreshHistory() {
 
 async function refreshSettings() {
   const p = await getProfile();
-  $('#s-name').value = p.name || '';
-  $('#s-phq-day').value = (p.phqDay ?? '');
-  $('#s-phq-time').value = (p.phqTime ?? '');
+  if ($('#s-name')) $('#s-name').value = p.name || '';
+  if ($('#s-phq-day')) $('#s-phq-day').value = (p.phqDay ?? '');
+  if ($('#s-phq-time')) $('#s-phq-time').value = (p.phqTime ?? '');
 
   medsCache = await listMeds(false);
-  const list = $('#meds-list'); list.innerHTML='';
-  medsCache.forEach(m=>{
-    const row = el('div', { class:'grid-2' },
-      el('div',{}, `${m.name} ${m.active? '':'(inaktiv)'} ${m.defaultDose? '· '+m.defaultDose:''}`),
-      el('div',{}, 
-        el('button',{class:'btn full-sm', onclick:()=>{
-          $('#m-name').value = m.name;
-          $('#m-dose').value = m.defaultDose||'';
-          $('#m-active').checked = !!m.active;
-          document.getElementById('m-add').dataset.id = m.id;
-        }}, 'Bearbeiten'),
-        ' ',
-        el('button',{class:'btn full-sm', onclick:async()=>{ await deleteMed(m.id); refreshSettings(); }}, 'Löschen')
-      ),
-    );
-    list.appendChild(row);
-  });
+  const list = $('#meds-list'); if (list) {
+    list.innerHTML='';
+    medsCache.forEach(m=>{
+      const row = el('div', { class:'grid-2' },
+        el('div',{}, `${m.name} ${m.active? '':'(inaktiv)'} ${m.defaultDose? '· '+m.defaultDose:''}`),
+        el('div',{}, 
+          el('button',{class:'btn full-sm', onclick:()=>{
+            $('#m-name').value = m.name;
+            $('#m-dose').value = m.defaultDose||'';
+            $('#m-active').checked = !!m.active;
+            document.getElementById('m-add').dataset.id = m.id;
+          }}, 'Bearbeiten'),
+          ' ',
+          el('button',{class:'btn full-sm', onclick:async()=>{ await deleteMed(m.id); refreshSettings(); }}, 'Löschen')
+        ),
+      );
+      list.appendChild(row);
+    });
+  }
 
   await refreshTagsCache();
 }
 
 function bindSettings() {
-  $('#s-name').addEventListener('change', e=> setProfile({ name: e.target.value }));
-  $('#s-phq-day').addEventListener('change', e=> setProfile({ phqDay: Number(e.target.value)||null }));
-  $('#s-phq-time').addEventListener('change', e=> setProfile({ phqTime: e.target.value || null }));
+  const name = $('#s-name');
+  if (name) name.addEventListener('change', e=> setProfile({ name: e.target.value }));
+  const day = $('#s-phq-day');
+  if (day) day.addEventListener('change', e=> setProfile({ phqDay: Number(e.target.value)||null }));
+  const time = $('#s-phq-time');
+  if (time) time.addEventListener('change', e=> setProfile({ phqTime: e.target.value || null }));
 
-  $('#m-add').onclick = async ()=>{
+  const mAdd = $('#m-add');
+  if (mAdd) mAdd.onclick = async ()=>{
     const id = document.getElementById('m-add').dataset.id ? Number(document.getElementById('m-add').dataset.id) : undefined;
     const med = {
       id, name: $('#m-name').value.trim(), defaultDose: $('#m-dose').value.trim(),
@@ -350,14 +378,16 @@ function bindSettings() {
     refreshSettings(); refreshMedOptions();
   };
 
-  $('#t-add').onclick = async ()=>{
+  const tAdd = $('#t-add');
+  if (tAdd) tAdd.onclick = async ()=>{
     const t = $('#t-new').value.trim(); if (!t) return;
     await addTag(t); $('#t-new').value=''; refreshTagsCache();
   };
 
-  $('#btn-export').onclick = handleExportJSON;
-  $('#btn-import').onclick = ()=> document.getElementById('file-import').click();
-  $('#file-import').onchange = async (e)=>{
+  const btnExport = $('#btn-export'); if (btnExport) btnExport.onclick = handleExportJSON;
+  const btnImport = $('#btn-import'); if (btnImport) btnImport.onclick = ()=> document.getElementById('file-import').click();
+  const fileImport = $('#file-import');
+  if (fileImport) fileImport.onchange = async (e)=>{
     const f = e.target.files[0]; if (!f) return;
     try {
       const text = await f.text();
@@ -365,36 +395,134 @@ function bindSettings() {
       alert('Import erfolgreich');
       refreshDashboard(); refreshHistory(); refreshSettings();
     } catch (err) {
-      alert('Import-Fehler: ' + err.message);
+      alert('Import-Fehler: ' + (err?.message || err));
     }
   };
-  $('#btn-pdf').onclick = ()=> handleExportPDF('Gefilterter Zeitraum oder Gesamt');
+  const btnPdf = $('#btn-pdf'); if (btnPdf) btnPdf.onclick = ()=> handleExportPDF('Gefilterter Zeitraum oder Gesamt');
 }
 
-/* ---- Storage Check ---- */
+/* ---------------------------------------
+   TO-DO LISTE (localStorage-basiert)
+   -> Schnell funktionsfähig. Wenn du willst,
+      portiere ich das als Nächstes in IndexedDB (store.js).
+---------------------------------------- */
+const TODOS_KEY = 'leomind_todos_v1';
+
+function loadTodos() {
+  try {
+    return JSON.parse(localStorage.getItem(TODOS_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+function saveTodos(list) {
+  localStorage.setItem(TODOS_KEY, JSON.stringify(list));
+}
+
+function addTodo(text) {
+  const list = loadTodos();
+  const todo = {
+    id: Date.now(),
+    text: text.trim(),
+    done: false,
+    createdAt: new Date().toISOString()
+  };
+  list.push(todo);
+  saveTodos(list);
+  return todo;
+}
+function toggleTodo(id) {
+  const list = loadTodos();
+  const i = list.findIndex(t => t.id === id);
+  if (i >= 0) { list[i].done = !list[i].done; saveTodos(list); }
+}
+function deleteTodo(id) {
+  const list = loadTodos().filter(t => t.id !== id);
+  saveTodos(list);
+}
+
+function refreshTodo() {
+  const ul = $('#todo-list');
+  if (!ul) return;
+  const items = loadTodos().slice().sort((a,b)=> a.done - b.done || b.id - a.id);
+  ul.innerHTML = '';
+  items.forEach(t => {
+    const li = el('li', { class: `todo-item${t.done ? ' completed':''}` });
+    const left = el('div', { class:'todo-left' },
+      el('input', { type:'checkbox', checked: t.done ? 'checked': null, onchange:()=>{
+        toggleTodo(t.id);
+        refreshTodo();
+      }}),
+      el('span', { style:'margin-left:8px;' }, t.text)
+    );
+    const right = el('div', { class:'todo-actions' },
+      el('button', { title:'Löschen', onclick:()=>{ deleteTodo(t.id); refreshTodo(); } }, '✕')
+    );
+    li.append(left, right);
+    ul.appendChild(li);
+  });
+}
+
+function bindTodo() {
+  const addBtn = $('#todo-add');
+  const input = $('#todo-text');
+  if (addBtn) addBtn.addEventListener('click', () => {
+    const txt = input?.value.trim();
+    if (!txt) return;
+    addTodo(txt);
+    input.value = '';
+    refreshTodo();
+  });
+  if (input) input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      const txt = input.value.trim();
+      if (!txt) return;
+      addTodo(txt);
+      input.value = '';
+      refreshTodo();
+    }
+  });
+}
+
+/* ---------------------------------------
+   STORAGE WARNING
+---------------------------------------- */
 async function detectStorageWarning() {
   const info = await storeReady();
-  const el = document.getElementById('storage-warning');
+  const elWarn = document.getElementById('storage-warning');
+  if (!elWarn) return;
   if (!info.idbAvailable) {
-    el.hidden = false;
-    el.textContent = 'Achtung: IndexedDB ist nicht verfügbar (z. B. Safari Privates Surfen). Die App nutzt einen flüchtigen In-Memory-Speicher. Daten gehen beim Schließen verloren.';
+    elWarn.hidden = false;
+    elWarn.textContent = 'Achtung: IndexedDB ist nicht verfügbar (z. B. Safari Privates Surfen). Die App nutzt einen flüchtigen In-Memory-Speicher. Daten gehen beim Schließen verloren.';
   } else {
-    el.hidden = true; el.textContent = '';
+    elWarn.hidden = true; elWarn.textContent = '';
   }
 }
 
-/* ---- Boot ---- */
+/* ---------------------------------------
+   BOOT
+---------------------------------------- */
 async function boot() {
   bindNav();
   bindSettings();
   initEntryForm();
+  bindTodo();              // << To-Do-Events aktivieren
   detectStorageWarning();
+
   setActive('dashboard');
-  document.getElementById('entry-form').addEventListener('submit', submitEntry);
-  document.getElementById('f-apply').addEventListener('click', refreshHistory);
+
+  const entryForm = document.getElementById('entry-form');
+  if (entryForm) entryForm.addEventListener('submit', submitEntry);
+
+  const apply = document.getElementById('f-apply');
+  if (apply) apply.addEventListener('click', refreshHistory);
+
   await refreshMedOptions();
   await refreshTagsCache();
   await refreshDashboard();
+  // Falls To-Do-View initial sichtbar ist (Deep Link), einmal rendern:
+  refreshTodo();
 }
 
 window.addEventListener('DOMContentLoaded', boot);
